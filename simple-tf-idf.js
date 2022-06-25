@@ -146,6 +146,29 @@ function cosine_similarity(tfidf){
     return cos_sim;
 }
 
+function similarity_test(document){
+    // 문서 토큰화
+    let tokenized_document = [];
+    for(i in document){
+        tokenized_document.push(tokenizer(document[i]));
+    }
+    console.log('tokenized_document : ', tokenized_document);
+    
+    // 모든 단어에 index 맵핑
+    let result = build_bag_of_words(tokenized_document);
+    let vocab = result[0];
+    let bow = result[1];
+    
+    // 모든 단어의 idf 구하기
+    let idf = get_idf(bow);
+    
+    // 모든 문서의 tfidf 구하기
+    let tfidf = get_tfidf(bow, idf);
+    
+    // 0번 문서와 나머지 문서의 유사도 검사
+    let cos_sim = cosine_similarity(tfidf);
+}
+
 function normalize(vector){
     // 벡터 정규화 공식
     let sum_square = 0;
@@ -162,4 +185,5 @@ module.exports = {
     get_idf,
     get_tfidf,
     cosine_similarity,
+    similarity_test,
 };
