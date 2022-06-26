@@ -187,13 +187,13 @@ function cosine_similarity(tfidf){
     });
     
     // 상위 5개의 bid만 추출
-    let top5_cos_sim_bid = [];
+    let top5_cos_sim_id = [];
     for(let i=1; i<6; i++){
         console.log(cos_sim[i]);
-        top5_cos_sim_bid.push(cos_sim[i].bid);
+        top5_cos_sim_id.push(cos_sim[i].id);
     }
     
-    return top5_cos_sim_bid;
+    return top5_cos_sim_id;
 }
 
 function similarity_test(document){
@@ -215,6 +215,12 @@ function similarity_test(document){
     
     // 0번 문서와 나머지 문서의 유사도 검사
     let cos_sim = cosine_similarity(tfidf);
+    
+    // 유사한 5개 문서 출력
+    for(let i in cos_sim){
+        console.log('id : ', cos_sim[i], ', ', document[cos_sim[i]]);
+    }
+    
     console.timeEnd('time');
 }
 
@@ -246,6 +252,19 @@ function normalize(vector){
     return Math.sqrt(sum_square);
 }
 
+function save_document_file(path, document){
+    const fs = require('fs');
+    fs.writeFile(path, JSON.stringify(document), err => {
+        if(err){
+            console.error(err);
+            return;
+        }
+        else{
+            console.log('document saved in : ', path);
+        }
+    });
+}
+
 function load_document_file(path){
     const fs = require('fs');
     let readData = fs.readFileSync(path);
@@ -260,5 +279,6 @@ module.exports = {
     cosine_similarity,
     similarity_test,
     similarity_test_token,
+    save_document_file,
     load_document_file,
 };
