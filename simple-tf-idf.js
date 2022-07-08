@@ -38,33 +38,44 @@ function build_bag_of_words(tokenized_document){
     for(let index in tokenized_document){
         col_temp = [];
         data_temp = [];
+        let bow_temp = [];
+        let bow_obj = {};
         for(let word in tokenized_document[index]){
             let i = word_to_index.get(tokenized_document[index][word]);
 
-            if(col_temp.length === 0){
-                col_temp.push(i);
-                data_temp.push(1);
+            if(bow_temp.length === 0){
+                // 오름차순을 위한 객체
+                bow_obj = {
+                    'col':i,
+                    'data':1,
+                }
+                bow_temp.push(bow_obj);
             }
             else{
                 let flag = 0;
-                for(let k in col_temp){
-                    if(col_temp[k] === i){
-                        data_temp[k]++;
+                for(let k in bow_temp){
+                    if(bow_temp[k].col === i){
+                        bow_temp[k].data++;
                         flag = 1;
                         break;
                     }
                 }
-
                 if(flag === 0){
-                    col_temp.push(i);
-                    data_temp.push(1);
+                    bow_obj = {
+                        'col':i,
+                        'data':1,
+                    }
+                    bow_temp.push(bow_obj);
                 }
             }
         }
-        row.push(col_temp.length + row[index]);
-        for(let i in col_temp){
-            col.push(col_temp[i]);
-            data.push(data_temp[i]);
+        row.push(bow_temp.length + row[index]);
+        bow_temp.sort(function(a, b) {
+            return a.col - b.col;
+        });
+        for(let i in bow_temp){
+            col.push(bow_temp[i].col);
+            data.push(bow_temp[i].data);
         }
     }
 
@@ -72,7 +83,7 @@ function build_bag_of_words(tokenized_document){
         'numberOfDocuments':N,
         'row':row,
         'col':col,
-        'data':data
+        'data':data,
     }
     
     //console.log('vocabulary : ', word_to_index);
@@ -150,15 +161,26 @@ function cosine_similarity(tfidf){
             comp_data.push(tfidf.data[j]);
         }
 
-        // 스칼라곱 구하기
-        for(let j in zero_data){// 0번 문서의 tfidf 개수만큼
-            for(let k in comp_data){// i번 문서의 tfidf 개수만큼
-
-                // 0번 문서의 tfidf벡터와 i번 문서의 tfidf벡터의 스칼라곱
-                if(zero_col[j] === comp_col[k]){
-                    scalar_product += zero_data[j] * comp_data[k];
-                    break;
-                }
+        // 스칼라곱 구하기 투포인터
+        let zero_poiner = 0;
+        let comp_pointer = 0;
+        let zero_end = zero_data.length - 1;
+        let comp_end = comp_data.length - 1;
+        while(1){
+            if(zero_poiner>zero_end || comp_pointer>comp_end){
+                break;
+            }
+            
+            if(zero_col[zero_poiner] === comp_col[comp_pointer]){
+                scalar_product += zero_data[zero_poiner] * comp_data[comp_pointer];
+                zero_poiner++;
+                comp_pointer++;
+            }
+            else if(zero_col[zero_poiner] < comp_col[comp_pointer]){
+                zero_poiner++;
+            }
+            else if(comp_col[comp_pointer] < zero_col[zero_poiner]){
+                comp_pointer++;
             }
         }
 
@@ -214,6 +236,9 @@ function similarity_test(document){
     
     // 0번 문서와 나머지 문서의 유사도 검사
     let cos_sim = cosine_similarity(tfidf);
+
+    // 0번 문서 출력
+    console.log('0 document : ', document[0]);
     
     // 유사한 5개 문서 출력
     for(let i in cos_sim){
